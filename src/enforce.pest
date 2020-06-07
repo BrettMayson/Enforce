@@ -31,5 +31,8 @@ char = {
 call = { ident ~ "(" ~ args ~ ")" }
 args = { (value | statement) ~ ("," ~ (value | statement))* }
 
+conditional = { (value | statement) ~ conditional_operator ~ (value | statement) }
+conditional_operator = { "&&" | "||" }
+
 COMMENT = _{ "//" ~ (!"\n" ~ ANY)* ~ "\n" | "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
 WHITESPACE = _{ " " | "\t" | "\r" | (!"\\" ~ "\n") }
