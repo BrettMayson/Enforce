@@ -1,8 +1,9 @@
-enforce = { SOI ~ (statement ~ ";")* ~ EOI}
+enforce = { SOI ~ (statement)* ~ EOI}
 
 statement = _{
-  assignment |
-  call
+  (assignment ~ ";") |
+  (call ~ ";") |
+  eif
 }
 
 assignment = { etype ~ ident ~ assignment_operator ~ (value | statement) }
@@ -10,13 +11,7 @@ assignment_operator = { "=" | "+=" }
 
 etype = { "int" | "string" | "bool" }
 
-value = _{
-  int |
-  string |
-  bool |
-  ident
-}
-
+value = _{ ident | int | bool | string }
 ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
 bool = @{ "true" | "false" }
 int = @{ ASCII_DIGIT+ }
@@ -28,11 +23,18 @@ char = {
     | "\\" ~ ("u" ~ ASCII_HEX_DIGIT{4})
 }
 
-call = { ident ~ "(" ~ args ~ ")" }
+call = { ident ~ ("(" ~ args ~ ")" | "()") }
 args = { (value | statement) ~ ("," ~ (value | statement))* }
 
-conditional = { (value | statement) ~ conditional_operator ~ (value | statement) }
-conditional_operator = { "&&" | "||" }
+eif = { "if" ~ "(" ~ logic_expr ~ ")"}
+
+logic_val  = !{ op_not? ~ comparison_expr }
+logic_expr = !{ logic_val ~ (op ~ logic_val)* }
+op = { "||" | "&&" }
+op_not = { "!" }
+
+comparison_op   = { "<=" | ">=" | ">" | "<" | "==" | "!=" }
+comparison_expr = { (call | value) ~ (comparison_op ~ (call | value))? }
 
 COMMENT = _{ "//" ~ (!"\n" ~ ANY)* ~ "\n" | "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
 WHITESPACE = _{ " " | "\t" | "\r" | (!"\\" ~ "\n") }
