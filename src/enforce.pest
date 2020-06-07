@@ -1,0 +1,35 @@
+enforce = { SOI ~ (statement ~ ";")* ~ EOI}
+
+statement = _{
+  assignment |
+  call
+}
+
+assignment = { etype ~ ident ~ assignment_operator ~ (value | statement) }
+assignment_operator = { "=" | "+=" }
+
+etype = { "int" | "string" | "bool" }
+
+value = _{
+  int |
+  string |
+  bool |
+  ident
+}
+
+ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
+bool = @{ "true" | "false" }
+int = @{ ASCII_DIGIT+ }
+string = ${ "\"" ~ inner ~ "\"" }
+inner = @{ char* }
+char = {
+    !("\"" | "\\") ~ ANY
+    | "\\" ~ ("\"" | "\\" | "/" | "b" | "f" | "n" | "r" | "t")
+    | "\\" ~ ("u" ~ ASCII_HEX_DIGIT{4})
+}
+
+call = { ident ~ "(" ~ args ~ ")" }
+args = { (value | statement) ~ ("," ~ (value | statement))* }
+
+COMMENT = _{ "//" ~ (!"\n" ~ ANY)* ~ "\n" | "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
+WHITESPACE = _{ " " | "\t" | "\r" | (!"\\" ~ "\n") }
