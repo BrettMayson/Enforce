@@ -6,6 +6,8 @@ pub enum Node {
   Bool(bool),
   Int(i32),
   Str(String),
+  Ident(String),
+  Empty,
   Call {
     ident: String,
     args: Vec<Node>,
@@ -74,9 +76,33 @@ impl Node {
           value: Box::new(Node::from_expr(parts.next().unwrap())),
         }
       }
+      Rule::call => {
+        let mut parts = pair.into_inner();
+        Node::Call {
+          ident: parts.next().unwrap().as_str().to_string(),
+          args: {
+            let parts = parts.next().unwrap().into_inner();
+            let mut nodes = Vec::new();
+            for part in parts {
+              nodes.push(Node::from_expr(part));
+            }
+            nodes
+          }
+        }
+      }
       Rule::int => {
         Node::Int(pair.as_str().parse().unwrap())
       }
+      Rule::string => {
+        Node::Str(pair.into_inner().next().unwrap().as_str().to_string())
+      }
+      Rule::ident => {
+        Node::Ident(pair.as_str().to_string())
+      }
+      Rule::bool => {
+        Node::Bool(pair.as_str().parse().unwrap())
+      }
+      Rule::EOI =>  Node::Empty,
       _ => unimplemented!("ahh {:#?}", pair)
     }
   }
