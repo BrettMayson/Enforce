@@ -9,7 +9,11 @@ impl Command for Execute {
         clap::SubCommand::with_name("execute")
             .version(*crate::VERSION)
             .about("Execute a file")
-            .arg(clap::Arg::with_name("file").help("File to lint").required(true))
+            .arg(
+                clap::Arg::with_name("file")
+                    .help("File to lint")
+                    .required(true),
+            )
     }
 
     fn run(&self, args: &clap::ArgMatches) -> Result<(), String> {
