@@ -23,10 +23,7 @@ pub enum Node {
         lhs: Box<Node>,
         rhs: Option<(ComparisonOperator, Box<Node>)>,
     },
-    LogicalExpression {
-        lhs: Box<Node>,
-        rhs: Option<(LogicalOperator, Box<Node>)>,
-    },
+    LogicalExpression(Vec<(LogicalOperator, Box<Node>)>),
     LogicVal {
         inverted: bool,
         expr: Box<Node>,
@@ -34,7 +31,7 @@ pub enum Node {
 }
 
 #[derive(Debug)]
-enum ComparisonOperator {
+pub enum ComparisonOperator {
     GreaterThan,
     LessThan,
     GreaterThanEqualTo,
@@ -92,7 +89,7 @@ impl FromStr for AssignmentOperator {
 }
 
 #[derive(Debug)]
-enum LogicalOperator {
+pub enum LogicalOperator {
     OR,
     AND,
 }
@@ -179,17 +176,20 @@ impl Node {
             }
             Rule::logic_expr => {
                 let mut parts = pair.into_inner();
-                Node::LogicalExpression {
-                    lhs: Box::new(Node::from_expr(parts.next().unwrap())),
-                    rhs: if let Some(op) = parts.next() {
-                        Some((
-                            LogicalOperator::from_str(op.as_str()).unwrap(),
+                Node::LogicalExpression({
+                    let mut extra = Vec::new();
+                    extra.push((
+                        LogicalOperator::AND,
+                        Box::new(Node::from_expr(parts.next().unwrap())),
+                    ));
+                    while parts.peek().is_some() {
+                        extra.push((
+                            LogicalOperator::from_str(parts.next().unwrap().as_str()).unwrap(),
                             Box::new(Node::from_expr(parts.next().unwrap())),
-                        ))
-                    } else {
-                        None
-                    },
-                }
+                        ));
+                    }
+                    extra
+                })
             }
             Rule::logic_val => {
                 let parts: Vec<_> = pair.into_inner().collect();
@@ -222,6 +222,36 @@ impl Node {
                 r.push_str(&b.to_string());
                 r
             }),
+            _ => unimplemented!(),
+        }
+    }
+
+    pub fn _eq(&self, other: &Node) -> bool {
+        use Node::*;
+        match (self, other) {
+            (Int(a), Int(b)) => a == b,
+            (Int(a), Bool(b)) => *a == *b as i32,
+            (Bool(a), Int(b)) => *b == *a as i32,
+            _ => unimplemented!(),
+        }
+    }
+
+    pub fn _gt(&self, other: &Node) -> bool {
+        use Node::*;
+        match (self, other) {
+            (Int(a), Int(b)) => a > b,
+            (Int(a), Bool(b)) => *a > *b as i32,
+            (Bool(a), Int(b)) => *b < *a as i32,
+            _ => unimplemented!(),
+        }
+    }
+
+    pub fn _lt(&self, other: &Node) -> bool {
+        use Node::*;
+        match (self, other) {
+            (Int(a), Int(b)) => a < b,
+            (Int(a), Bool(b)) => *a < *b as i32,
+            (Bool(a), Int(b)) => *b > *a as i32,
             _ => unimplemented!(),
         }
     }

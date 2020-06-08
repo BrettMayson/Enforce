@@ -10,5 +10,11 @@ int b = "my favourite number is ";
 b += 20;
 Print(b);
 
-int y = 10;
-int x = y + 5; 
+int x = 10;
+int y = 20;
+if (x == 5 || x == 10) {
+    Print("holy shit");
+}
+
+// int y = 10;
+// int x = y + 5; 

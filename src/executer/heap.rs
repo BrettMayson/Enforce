@@ -18,7 +18,7 @@ impl Heap {
     pub fn higher(&mut self) {
         self.scopes.remove(self.scopes.len() - 1);
     }
-    pub fn get_variable<'a>(&'a self, key: &str) -> Option<&'a Box<Node>> {
+    pub fn get_variable(&self, key: &str) -> Option<&Node> {
         for scope in self.scopes.iter().rev() {
             if scope.contains_key(key) {
                 return Some(scope.get(key).unwrap());

@@ -1,4 +1,4 @@
-use crate::parser::{AssignmentOperator, Node};
+use crate::parser::{AssignmentOperator, ComparisonOperator, LogicalOperator, Node};
 
 mod heap;
 use heap::Heap;
@@ -57,7 +57,71 @@ pub fn doit(node: Node, heap: &mut Heap) {
                 }
             }
         }
+        Node::eIf(comparison, statements) => {
+            if let Node::LogicalExpression(checks) = *comparison {
+                let mut current = true;
+                for check in checks {
+                    current = evaluate_comparison(current, check.0, *check.1, heap);
+                }
+                if current {
+                    for stmt in statements {
+                        doit(stmt, heap);
+                    }
+                }
+            } else {
+                panic!("what huh")
+            }
+        }
         Empty => {}
         _ => unimplemented!(),
+    }
+}
+
+fn evaluate_comparison(current: bool, op: LogicalOperator, node: Node, heap: &mut Heap) -> bool {
+    use Node::*;
+    match (current, op) {
+        (true, LogicalOperator::AND) | (false, LogicalOperator::OR) => {
+            if let LogicVal { inverted, expr } = node {
+                if let ComparisonExpression { lhs, rhs } = *expr {
+                    let a = match *lhs {
+                        Call { .. } => unimplemented!("unable to do calls"),
+                        Ident(b) => {
+                            if let Some(n) = heap.get_variable(&b) {
+                                n
+                            } else {
+                                panic!("Undefined variable {:?}", b)
+                            }
+                        }
+                        _ => &*lhs,
+                    };
+                    match rhs {
+                        Some(r) => {
+                            let b = match *r.1 {
+                                Ident(b) => {
+                                    if let Some(n) = heap.get_variable(&b) {
+                                        n
+                                    } else {
+                                        panic!("Undefined variable {:?}", b)
+                                    }
+                                }
+                                _ => &*r.1,
+                            };
+                            match r.0 {
+                                ComparisonOperator::EqualEqual => a._eq(&b),
+                                ComparisonOperator::GreaterThan => a._gt(&b),
+                                ComparisonOperator::LessThan => a._lt(&b),
+                                _ => unimplemented!(),
+                            }
+                        }
+                        None => a._eq(&Node::Bool(true)),
+                    }
+                } else {
+                    panic!("what")
+                }
+            } else {
+                panic!("what")
+            }
+        }
+        _ => current,
     }
 }
