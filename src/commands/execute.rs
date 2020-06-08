@@ -24,7 +24,10 @@ impl Command for Execute {
         println!("=============");
         println!("{}", source);
         println!("=============");
-        println!("{:#?}", crate::parser::parse(&source).unwrap());
+        let ast = crate::parser::parse(&source).unwrap();
+        if let crate::parser::Node::Enforce(nodes) = ast {
+            crate::executer::execute(nodes);
+        }
         Ok(())
     }
 }

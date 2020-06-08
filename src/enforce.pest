@@ -6,7 +6,7 @@ statement = _{
   eif
 }
 
-assignment = { etype ~ ident ~ assignment_operator ~ (value | statement) }
+assignment = { etype? ~ ident ~ assignment_operator ~ (value | statement) }
 assignment_operator = { "=" | "+=" }
 
 etype = { "int" | "string" | "bool" }

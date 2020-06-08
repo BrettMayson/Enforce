@@ -14,7 +14,7 @@ pub enum Node {
         args: Vec<Node>,
     },
     Assignment {
-        etype: eType,
+        etype: Option<eType>,
         ident: String,
         operator: AssignmentOperator,
         value: Box<Node>,
@@ -58,7 +58,7 @@ impl FromStr for ComparisonOperator {
 }
 
 #[derive(Debug)]
-enum eType {
+pub enum eType {
     Int,
     String,
     Bool,
@@ -76,7 +76,7 @@ impl FromStr for eType {
 }
 
 #[derive(Debug)]
-enum AssignmentOperator {
+pub enum AssignmentOperator {
     Equal,
     AddEqual,
 }
@@ -121,9 +121,15 @@ impl Node {
                 Self::Enforce(nodes)
             }
             Rule::assignment => {
-                let mut parts = pair.into_inner();
+                let parts: Vec<_> = pair.into_inner().collect();
+                let size = parts.len();
+                let mut parts = parts.into_iter();
                 Node::Assignment {
-                    etype: eType::from_str(parts.next().unwrap().as_str()).unwrap(),
+                    etype: if size == 4 {
+                        Some(eType::from_str(parts.next().unwrap().as_str()).unwrap())
+                    } else {
+                        None
+                    },
                     ident: parts.next().unwrap().as_str().to_string(),
                     operator: AssignmentOperator::from_str(parts.next().unwrap().as_str()).unwrap(),
                     value: Box::new(Node::from_expr(parts.next().unwrap())),
@@ -194,6 +200,41 @@ impl Node {
             }
             Rule::EOI => Node::Empty,
             _ => unimplemented!("ahh {:#?}", pair),
+        }
+    }
+
+    pub fn add(&self, other: &Node) -> Node {
+        use Node::*;
+        match (self, other) {
+            (Int(a), Int(b)) => Int(a + b),
+            (Str(a), Str(b)) => Str({
+                let mut r = a.to_string();
+                r.push_str(&b);
+                r
+            }),
+            (Int(a), Str(b)) => Str({
+                let mut r = a.to_string();
+                r.push_str(&b);
+                r
+            }),
+            (Str(a), Int(b)) => Str({
+                let mut r = a.to_string();
+                r.push_str(&b.to_string());
+                r
+            }),
+            _ => unimplemented!(),
+        }
+    }
+}
+
+impl ToString for Node {
+    fn to_string(&self) -> String {
+        use Node::*;
+        match self {
+            Str(a) => a.to_string(),
+            Int(a) => a.to_string(),
+            Bool(a) => a.to_string(),
+            _ => panic!("Attempting to print {:?}", self),
         }
     }
 }

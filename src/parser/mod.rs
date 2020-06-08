@@ -5,7 +5,7 @@ use pest::Parser;
 pub struct EnforceParser;
 
 mod node;
-pub use node::Node;
+pub use node::{AssignmentOperator, Node};
 
 pub fn parse(source: &str) -> Result<Node, String> {
     let pair = EnforceParser::parse(Rule::enforce, source)
